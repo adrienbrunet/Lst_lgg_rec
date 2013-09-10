@@ -26,7 +26,7 @@ Further processing could be needed, see write_label.py
 
 ---- PLDA List
 INPUT: a file (or several files listed in target_lang) with a list of lines :
-"filename duration [label]" duration and label could be omitted 
+"filename foo bar ponay" only the first word is taken into account 
 Those filenames are from ONE language only.
 
 OUTPUT: a list which suits PLDA needs: 50 files per line
@@ -170,22 +170,6 @@ class Lst(object):
         plt.ylabel("Number of files")
         plt.show()
 
-    def build_plda_list(self, lang):
-        ''' Write a PLDA_list in lang-plda.txt'''
-        fn = lang + '_plda.txt'
-        file1 = open(fn, "w") 
-        while len(self.rows) != 0:
-            line = []
-            while len(line) < 50:
-                if len(self.rows) == 0: break
-                else: line.append(self.rows.pop())
-            s = ""
-            for name in line:
-                s += name.rstrip().split()[0]
-                s += " "
-            file1.write(s + "\n")
-
-
 
 class File(object):
     ''' From a string "filename duration...", creates an object
@@ -231,13 +215,47 @@ class Interval(object):
     def __cmp__(self, other):
         return cmp(len(self.list_files), len(other.list_files))
 
+class Lst_PLDA(object):
+    
+    def __init__(self, filename):
+        self.filename = filename
+        self.rows          = self.load_lst()
+        
+
+    def load_lst(self):
+        ''' Load filename which should look like: "filename duration [label]"
+        Exemple file: list.txt
+        >>> List = Lst('list.txt')
+        '''
+        list = open(self.filename, "r")
+        rows = list.readlines()
+        list.close()
+        return rows
+
+
+    def build_plda_list(self, lang):
+        ''' Write a PLDA_list in lang-plda.txt'''
+        fn = lang + '_plda.txt'
+        file1 = open(fn, "w") 
+        while len(self.rows) != 0:
+            line = []
+            while len(line) < 50:
+                if len(self.rows) == 0: break
+                else: line.append(self.rows.pop())
+            s = ""
+            for name in line:
+                s += name.rstrip().split()[0]
+                s += ".y "
+            file1.write(s + "\n")
+
 
 def main(lang):
     '''To run'''
-    filename = lang + '-frame.lst' # To fit the names of your lists
-    List = Lst(filename)
+    
     #### UNIFORMIZATION
     #---------------------------------------------------------------------------
+    #filename = lang + '-frame.lst' # To fit the names of your lists
+    #List = Lst(filename)
     #List.uniformize(31) # You can modify this number
     #List.plot_new_and_old_distrib()
     #List.plot_duration_old()
@@ -245,7 +263,9 @@ def main(lang):
 
     #### PLDA List building
     #---------------------------------------------------------------------------
-    List.build_plda_list(lang)
+    filename = lang + '_pre_plda.txt' # To fit the names of your lists
+    List = Lst_PLDA(filename)
+    List.build_plda_list(lang) #see this function if no adding of '.y' is needed
 
 if __name__ == "__main__":
     import doctest
