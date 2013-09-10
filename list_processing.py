@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Dealing with list processing: 
+Dealing with list processing for language recognition: 
 - uniform distribution and label manipulation
 - PLDA list
 
@@ -26,7 +26,7 @@ Further processing could be needed, see write_label.py
 
 ---- PLDA List
 INPUT: a file (or several files listed in target_lang) with a list of lines :
-"filename duration [label]"
+"filename duration [label]" duration and label could be omitted 
 Those filenames are from ONE language only.
 
 OUTPUT: a list which suits PLDA needs: 50 files per line
@@ -49,13 +49,13 @@ class Lst(object):
 
     def __init__(self, filename):
         self.filename = filename
-        rows          = self.load_lst()
-        self.nb_file_global, self.max_duration_global = self.process_row(rows)
+        self.rows          = self.load_lst()
+        self.nb_file_global, self.max_duration_global = self.process_row(self.rows)
         self.old_list = []
         self.new_list = []
         self.sorted_list = []
         self.sorted_list_imm = []
-        for rr in rows:
+        for rr in self.rows:
             self.old_list.append(File(rr))
         self.sorted_list = list(self.old_list)
         self.sorted_list.sort()
@@ -142,10 +142,10 @@ class Lst(object):
     def write_output(self, lang):
         ''' Write in lang-uni.txt the files with the new labels '''
         fn = lang + '_uni.txt'
-        fichier = open(fn, "w")        
+        file1 = open(fn, "w")        
         for llist in self.new_list:
             for el in llist.list_files:
-                fichier.write(str(el.filename) + ' ' + str(el.label) + '\n')
+                file1.write(str(el.filename) + ' ' + str(el.label) + '\n')
 
     def plot_new_and_old_distrib(self):
         '''2 lists with the duration in second'''
@@ -170,8 +170,22 @@ class Lst(object):
         plt.ylabel("Number of files")
         plt.show()
 
-    def build_plda_list(self):
-        pass
+    def build_plda_list(self, lang):
+        ''' Write a PLDA_list in lang-plda.txt'''
+        fn = lang + '_plda.txt'
+        file1 = open(fn, "w") 
+        while len(self.rows) != 0:
+            line = []
+            while len(line) < 50:
+                if len(self.rows) == 0: break
+                else: line.append(self.rows.pop())
+            s = ""
+            for name in line:
+                s += name.rstrip().split()[0]
+                s += " "
+            file1.write(s + "\n")
+
+
 
 class File(object):
     ''' From a string "filename duration...", creates an object
@@ -231,7 +245,7 @@ def main(lang):
 
     #### PLDA List building
     #---------------------------------------------------------------------------
-
+    List.build_plda_list(lang)
 
 if __name__ == "__main__":
     import doctest
